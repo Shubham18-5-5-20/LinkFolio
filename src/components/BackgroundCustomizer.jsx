@@ -1,18 +1,17 @@
-// src/components/BackgroundCustomizer.jsx
 'use client';
 import React from 'react';
+import { FiX } from 'react-icons/fi'; // Import the close icon
 
-const BackgroundCustomizer = ({ background, onBackgroundChange, socialLinks, onLinkChange, profile, onProfileChange }) => {
-
+// The component receives setIsPanelVisible to allow it to close itself on mobile
+const BackgroundCustomizer = ({ background, onBackgroundChange, socialLinks, onLinkChange, profile, onProfileChange, setIsPanelVisible }) => {
+  
   // Handlers for all state changes, passed from App.jsx
   const handleProfileImageChange = (property, value) => {
     onProfileChange(prev => ({ ...prev, image: { ...prev.image, [property]: value } }));
   };
-
   const handleTextChange = (field, property, value) => {
     onProfileChange(prev => ({ ...prev, [field]: { ...prev[field], [property]: value } }));
   };
-
   const handleTypeChange = (type) => onBackgroundChange(prev => ({ ...prev, type }));
   const handleSettingChange = (setting, value) => onBackgroundChange(prev => ({ ...prev, [setting]: value }));
   const handleGradientChange = (property, value) => onBackgroundChange(prev => ({ ...prev, gradient: { ...prev.gradient, [property]: value } }));
@@ -32,10 +31,21 @@ const BackgroundCustomizer = ({ background, onBackgroundChange, socialLinks, onL
   const patterns = [ { id: 'none', name: 'None' }, { id: 'dots', name: 'Dots' }, { id: 'stripes', name: 'Stripes' }, { id: 'chevron', name: 'Chevron' }, { id: 'zigzag', name: 'Zigzag' } ];
 
   return (
-    <div className="fixed top-4 left-4 p-4 bg-white/80 backdrop-blur-sm rounded-lg shadow-xl z-50 w-80 max-h-[95vh] overflow-y-auto">
+    // This div is no longer `fixed`. The wrapper in App.jsx handles positioning.
+    <div className="relative p-4 bg-white/80 backdrop-blur-sm shadow-xl w-80 h-full overflow-y-auto">
+      
+      {/* --- The "Close" button for mobile --- */}
+      <button 
+        onClick={() => setIsPanelVisible(false)}
+        className="md:hidden absolute top-4 right-4 z-50 p-1 text-gray-600 hover:text-gray-900"
+        aria-label="Close settings panel"
+      >
+        <FiX size={20} />
+      </button>
+
       <div className="space-y-4">
         
-        {/* --- SECTION 1: BACKGROUND (RESTORED) --- */}
+        {/* --- SECTION 1: BACKGROUND CONTROLS --- */}
         <details open>
           <summary className="font-bold cursor-pointer">Background</summary>
           <div className="pt-2 space-y-3">
@@ -75,7 +85,7 @@ const BackgroundCustomizer = ({ background, onBackgroundChange, socialLinks, onL
           </div>
         </details>
 
-        {/* --- SECTION 2: PROFILE PICTURE --- */}
+        {/* --- SECTION 2: PROFILE PICTURE CONTROLS --- */}
         <details className="border-t pt-3" open>
           <summary className="font-bold cursor-pointer">Profile Picture</summary>
           <div className="pt-2 space-y-2">
@@ -84,7 +94,7 @@ const BackgroundCustomizer = ({ background, onBackgroundChange, socialLinks, onL
           </div>
         </details>
 
-        {/* --- SECTION 3: TEXT STYLING --- */}
+        {/* --- SECTION 3: TEXT STYLING CONTROLS --- */}
         <details className="border-t pt-3" open>
           <summary className="font-bold cursor-pointer">Text Styling</summary>
           <div className="pt-2 space-y-3">
@@ -125,7 +135,7 @@ const BackgroundCustomizer = ({ background, onBackgroundChange, socialLinks, onL
           </div>
         </details>
 
-        {/* --- SECTION 4: SOCIAL LINKS (RESTORED) --- */}
+        {/* --- SECTION 4: SOCIAL LINKS CONTROLS --- */}
         <details className="border-t pt-3">
           <summary className="font-bold cursor-pointer">Social Links</summary>
           <div className="pt-2 space-y-3">

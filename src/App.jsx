@@ -4,31 +4,24 @@ import { useState, useEffect } from 'react';
 import BackgroundCustomizer from './components/BackgroundCustomizer';
 import ProfileSection from './components/ProfileSection';
 import SocialLinks from './components/SocialLinks';
+import { FiSettings, FiX } from 'react-icons/fi'; // Import icons for the buttons
 
 function App() {
-  // State for background
+  // --- CHANGE IS HERE: State to manage panel visibility ---
+  const [isPanelVisible, setIsPanelVisible] = useState(false);
+
+  // All existing state and handlers remain unchanged
   const [background, setBackground] = useState(() => {
-    try {
-      const savedBackground = localStorage.getItem('userBackground');
-      if (savedBackground) return JSON.parse(savedBackground);
-    } catch (error) {
-      console.error("Failed to parse background from localStorage", error);
-    }
+    const savedBackground = localStorage.getItem('userBackground');
+    if (savedBackground) return JSON.parse(savedBackground);
     return { type: 'solid', color: '#e5e7eb', gradient: { angle: 90, colors: ['#74EBD5', '#ACB6E5'] }, image: '', pattern: 'none', patternOpacity: 50 };
   });
 
-  // State for social links
   const [socialLinks, setSocialLinks] = useState(() => {
-    try {
-      const savedLinks = localStorage.getItem('userSocialLinks');
-      if (savedLinks) return JSON.parse(savedLinks);
-    } catch (error) {
-      console.error("Failed to parse social links from localStorage", error);
-    }
-    return { x: '', instagram: '', youtube: '', facebook: '', tiktok: '', discord: '' };
+    const savedLinks = localStorage.getItem('userSocialLinks');
+    return savedLinks ? JSON.parse(savedLinks) : { x: '', instagram: '', youtube: '', facebook: '', tiktok: '', discord: '' };
   });
 
-  // --- THE FINAL, ARMORED FIX IS HERE ---
   const [profile, setProfile] = useState(() => {
     const defaultProfile = {
       image: { src: '', size: 128 },
@@ -36,41 +29,30 @@ function App() {
       profession: { text: 'Your Profession', fontStyle: 'normal', fontSize: '18px', fontColor: '#374151', fontWeight: 'normal', fontFamily: 'Arial', textAlign: 'left' },
       description: { text: 'A little bit about yourself.', fontStyle: 'normal', fontSize: '16px', fontColor: '#6B7280', fontWeight: 'normal', fontFamily: 'Arial', textAlign: 'left' }
     };
-    
     try {
       const savedProfile = localStorage.getItem('profile');
       if (savedProfile) {
         const parsed = JSON.parse(savedProfile);
-        
-        // This is the new, more robust merging logic.
-        // It explicitly checks if the saved `image` is an object before spreading it.
         const safeImage = typeof parsed.image === 'object' && parsed.image !== null ? parsed.image : {};
-
         return {
-          ...defaultProfile,
-          ...parsed,
-          image: { ...defaultProfile.image, ...safeImage }, // This line is now crash-proof
+          ...defaultProfile, ...parsed,
+          image: { ...defaultProfile.image, ...safeImage },
           name: { ...defaultProfile.name, ...(parsed.name || {}) },
           profession: { ...defaultProfile.profession, ...(parsed.profession || {}) },
           description: { ...defaultProfile.description, ...(parsed.description || {}) },
         };
       }
-    } catch (error) {
-      console.error("Failed to parse profile from localStorage", error);
-    }
+    } catch (error) { console.error("Failed to parse profile from localStorage", error); }
     return defaultProfile;
   });
 
-  // useEffects for saving data
   useEffect(() => { localStorage.setItem('userBackground', JSON.stringify(background)); }, [background]);
   useEffect(() => { localStorage.setItem('userSocialLinks', JSON.stringify(socialLinks)); }, [socialLinks]);
   useEffect(() => { localStorage.setItem('profile', JSON.stringify(profile)); }, [profile]);
 
-  // State handlers
   const handleSocialLinkChange = (platform, url) => setSocialLinks(prev => ({ ...prev, [platform]: url }));
   const handleProfileChange = (updater) => setProfile(updater);
 
-  // Background style function
   const getBackgroundStyle = () => {
     let baseBackground = '';
     if (background.type === 'solid') baseBackground = background.color;
@@ -97,19 +79,45 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen w-full" style={getBackgroundStyle()}>
-      <BackgroundCustomizer
-        background={background}
-        onBackgroundChange={setBackground}
-        socialLinks={socialLinks}
-        onLinkChange={handleSocialLinkChange}
-        profile={profile}
-        onProfileChange={handleProfileChange}
-      />
-      <ProfileSection 
-        profile={profile}
-        onProfileChange={handleProfileChange}
-      />
+    <div className="min-h-screen w-full font-sans" style={getBackgroundStyle()}>
+      
+      {/* --- CHANGE IS HERE: Wrapper for the control panel --- */}
+      {/* This div handles the sliding transition based on `isPanelVisible` */}
+      {/* On medium screens and up (md:), it is always visible and translated */}
+      <div className={`fixed top-0 left-0 h-full z-50 transition-transform duration-300 ease-in-out 
+        ${isPanelVisible ? 'translate-x-0' : '-translate-x-full'} 
+        md:translate-x-0`
+      }>
+        <BackgroundCustomizer
+          background={background}
+          onBackgroundChange={setBackground}
+          socialLinks={socialLinks}
+          onLinkChange={handleSocialLinkChange}
+          profile={profile}
+          onProfileChange={handleProfileChange}
+          // Pass the setter down so the panel can close itself
+          setIsPanelVisible={setIsPanelVisible}
+        />
+      </div>
+
+      {/* --- CHANGE IS HERE: The "Settings" button --- */}
+      {/* This button is only visible on small screens (md:hidden) */}
+      <button 
+        onClick={() => setIsPanelVisible(true)}
+        className="md:hidden fixed top-4 right-4 z-40 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg"
+        aria-label="Open settings panel"
+      >
+        <FiSettings size={24} />
+      </button>
+
+      {/* The main content now needs left padding on desktop to not be covered by the panel */}
+      <div className="md:pl-80"> {/* 80 is the width of the panel (w-80 = 20rem = 320px) */}
+        <ProfileSection 
+          profile={profile}
+          onProfileChange={handleProfileChange}
+        />
+      </div>
+
       <SocialLinks socialLinks={socialLinks} />
     </div>
   );
